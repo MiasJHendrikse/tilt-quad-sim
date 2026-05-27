@@ -14,7 +14,7 @@ The simulation covers a full point-to-point mission: vertical takeoff, heading a
 - **Altitude-first thrust allocator** — vertical demand is always satisfied first; horizontal thrust uses whatever rotor capacity remains
 - **Cascade PID control** — altitude, velocity, roll, pitch, and yaw loops with configurable gains and anti-windup
 - **Bang-bang braking** — cruise phase uses on/off deceleration logic for efficient stopping at the target
-- **Programmatic Simulink model** — the `.slx` model is generated fresh from `build_model.m`; no binary model file in the repo
+- **Programmatic Simulink model** — the `.slx` is committed and can be opened directly; it can also be regenerated from `build_model.m`
 - **Animated 4-pane dashboard** — real-time (or recorded) visualisation of 3D flight path, drone geometry, tilt gauges, and top-down map
 - **Quantitative performance report** — 40+ metrics: overshoot, RMS errors, actuator saturation, phase timing
 
@@ -38,17 +38,16 @@ MATLAB R2023b or newer is recommended.
 ```
 tilt-quad-sim/
 ├── README.md            — this file
-├── .gitignore           — excludes generated .slx, slprj/, *.mat
+├── .gitignore           — excludes slprj/, *.mat, and generated .slx (tilt_quad_sim.slx is committed)
 ├── params.m             — mission parameters, PID gains, physical constants
 ├── build_model.m        — generates tilt_quad_sim.slx using the Simulink API
+├── tilt_quad_sim.slx    — Simulink model (committed; can also be regenerated via build_model.m)
 ├── run_simulation.m     — top-level entry point; calls params, build, sim, post-processing
 ├── plot_animation.m     — animated 4-pane dashboard (3D view, drone geometry, tilt gauges, map)
 ├── plot_metrics.m       — static 3×3 tiled time-history charts
 ├── figure_defs.m        — shared chart definitions used by plot_metrics.m
 └── mission_stats.m      — prints quantitative performance report to Command Window
 ```
-
-> The file `tilt_quad_sim.slx` is generated at runtime and is not committed. See **Installation** below.
 
 ---
 
@@ -73,13 +72,11 @@ tilt-quad-sim/
    ver('simulink'), ver('aero'), ver('control'), ver('stateflow')
    ```
 
-4. **Generate the Simulink model** — this is required once after cloning (the `.slx` is not in the repo):
+4. **Optional — regenerate the model** — `tilt_quad_sim.slx` is already in the repo; you only need this if you modify `build_model.m`:
 
    ```matlab
    build_model
    ```
-
-   This creates `tilt_quad_sim.slx` in the current folder.
 
 ---
 
@@ -89,14 +86,13 @@ tilt-quad-sim/
 % 1. Set mission parameters (prompts you for target, altitude, speed on first run)
 params
 
-% 2. Build the Simulink model (.slx is not committed — generate it once)
-build_model
-
-% 3. Run the simulation and open the post-processing dashboard
+% 2. Run the simulation and open the post-processing dashboard
 run_simulation
 ```
 
 On subsequent runs, just call `run_simulation` — `params` is called automatically and detects that variables are already in the workspace.
+
+Alternatively, you can open `tilt_quad_sim.slx` directly in Simulink and press **Run** — but you must run `params` in MATLAB first so the workspace variables are loaded.
 
 To re-enter mission parameters, clear them first:
 
@@ -109,7 +105,18 @@ run_simulation
 
 ## How to Run / Use
 
-### Running the simulation
+### Running the Simulink model directly
+
+You can open `tilt_quad_sim.slx` in Simulink and press **Run** without going through `run_simulation.m`. **You must run `params` in MATLAB first** to load the workspace variables the model depends on:
+
+```matlab
+params          % loads gains, physical constants, and mission parameters
+% then open tilt_quad_sim.slx and press Run in Simulink
+```
+
+Post-processing (animation, metrics, stats) still requires running `plot_animation`, `plot_metrics`, or `mission_stats` manually afterwards.
+
+### Running via the MATLAB script
 
 `run_simulation.m` is the single entry point. It:
 
@@ -242,7 +249,7 @@ All gains are in `params.m` under clearly labelled sections:
 
 ## Notes / Limitations
 
-- The `.slx` model file is not committed. Run `build_model` once after cloning to generate it.
+- `tilt_quad_sim.slx` is committed. Run `build_model` only if you want to regenerate it after modifying `build_model.m`.
 - The `slprj/` folder (Simulink build cache) is generated automatically and safe to delete.
 - If MATLAB complains about a missing library on `build_model`, make sure the Aerospace Blockset and Control System Toolbox are installed.
 - The 6DOF model uses Euler angles — gimbal lock can occur near ±90° pitch, though normal flight stays well within safe limits.
